@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Conceptos{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-md-5">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Crear concepto</h5>
+        <form method="post">
+          {{ form.hidden_tag() }}
+          <div class="mb-3">
+            {{ form.nombre.label(class="form-label") }}
+            {{ form.nombre(class="form-control", placeholder="Nombre del concepto (ej. Agua)") }}
+            {% for e in form.nombre.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="mb-3">
+            {{ form.valor_presupuestado.label(class="form-label") }}
+            {{ form.valor_presupuestado(class="form-control", placeholder="Valor presupuestado mensual") }}
+            {% for e in form.valor_presupuestado.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="mb-3">
+            {{ form.area_id.label(class="form-label") }}
+            {{ form.area_id(class="form-select") }}
+            {% for e in form.area_id.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="d-flex justify-content-end">
+            {{ form.submit(class="btn btn-primary") }}
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-7">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Conceptos registrados</h5>
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead><tr><th>Área</th><th>Concepto</th><th class="text-end">Presupuestado</th><th class="text-end">Gastado</th><th class="text-end">Restante</th></tr></thead>
+            <tbody>
+              {% for c in conceptos %}
+                <tr>
+                  <td>{{ c.area.nombre }}</td>
+                  <td>{{ c.nombre }}</td>
+                  <td class="text-end">{{ '{:,.0f}'.format(c.valor_presupuestado) }}</td>
+                  <td class="text-end">{{ '{:,.0f}'.format(c.total_gastado) }}</td>
+                  <td class="text-end">{{ '{:,.0f}'.format(c.restante) }}</td>
+                </tr>
+              {% else %}
+                <tr><td colspan="5" class="text-center small text-muted">No hay conceptos aún</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

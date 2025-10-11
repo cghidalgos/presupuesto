@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Gastos{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-md-5">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Registrar gasto</h5>
+        <form method="post">
+          {{ form.hidden_tag() }}
+          <div class="mb-3">
+            {{ form.concepto_id.label(class="form-label") }}
+            {{ form.concepto_id(class="form-select") }}
+            {% for e in form.concepto_id.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="mb-3">
+            {{ form.monto.label(class="form-label") }}
+            {{ form.monto(class="form-control", placeholder="Monto gastado") }}
+            {% for e in form.monto.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="d-flex justify-content-end">
+            {{ form.submit(class="btn btn-primary") }}
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-7">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Historial de gastos</h5>
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead><tr><th>Fecha</th><th>Usuario</th><th>Concepto</th><th class="text-end">Monto</th></tr></thead>
+            <tbody>
+              {% for g in gastos %}
+                <tr>
+                  <td>{{ g.fecha.strftime('%Y-%m-%d %H:%M') }}</td>
+                  <td>{{ g.user.name }}</td>
+                  <td>{{ g.concepto.nombre }}</td>
+                  <td class="text-end">{{ '{:,.0f}'.format(g.monto) }}</td>
+                </tr>
+              {% else %}
+                <tr><td colspan="4" class="text-center small text-muted">No hay registros</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Resumen mensual</h5>
+        <div class="row">
+          <div class="col-md-4">
+            <div class="card mb-2">
+              <div class="card-body">
+                <div class="card-title-small">Presupuestado</div>
+                <h4>{{ '{:,.0f}'.format(total_presupuestado) if total_presupuestado else 0 }}</h4>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card mb-2">
+              <div class="card-body">
+                <div class="card-title-small">Gastado</div>
+                <h4>{{ '{:,.0f}'.format(total_gastado) if total_gastado else 0 }}</h4>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card mb-2">
+              <div class="card-body">
+                <div class="card-title-small">Restante</div>
+                <h4>{{ '{:,.0f}'.format(total_restante) if total_restante else 0 }}</h4>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <hr />
+        <h6>Últimos gastos</h6>
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Fecha</th><th>Usuario</th><th>Concepto</th><th class="text-end">Monto</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for g in gastos %}
+                <tr>
+                  <td>{{ g.fecha.strftime('%Y-%m-%d') }}</td>
+                  <td>{{ g.user.name }}</td>
+                  <td>{{ g.concepto.nombre }}</td>
+                  <td class="text-end">{{ '{:,.0f}'.format(g.monto) }}</td>
+                </tr>
+              {% else %}
+                <tr><td colspan="4" class="text-center small text-muted">No hay gastos registrados</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Aportes esperados</h5>
+        <ul class="list-group list-group-flush">
+          {% for a in aporte_info %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <div>
+                <strong>{{ a.user.name }}</strong><br />
+                <small class="text-muted">Aporte: {{ (a.user.aporte * 100)|round(0) }}%</small>
+              </div>
+              <div class="text-end">
+                <div>Esperado: <strong>{{ '{:,.0f}'.format(a.expected) }}</strong></div>
+                <div>Pagado: <strong>{{ '{:,.0f}'.format(a.paid) }}</strong></div>
+                <div class="{{ 'text-success' if a.diff>0 else 'text-danger' if a.diff<0 else '' }}">Diff: {{ '{:,.0f}'.format(a.diff) }}</div>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6>Acciones rápidas</h6>
+        <div class="d-grid gap-2">
+          <a class="btn btn-outline-primary" href="{{ url_for('gastos_view') }}">Registrar gasto</a>
+          <a class="btn btn-outline-secondary" href="{{ url_for('conceptos_view') }}">Gestionar conceptos</a>
+          <a class="btn btn-outline-secondary" href="{{ url_for('areas_view') }}">Gestionar áreas</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Áreas{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-md-5">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Crear / editar área</h5>
+        <form method="post">
+          {{ form.hidden_tag() }}
+          <div class="mb-3">
+            {{ form.nombre.label(class="form-label") }}
+            {{ form.nombre(class="form-control", placeholder="Nombre del área (ej. Servicios)") }}
+            {% for e in form.nombre.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="d-flex justify-content-end">
+            {{ form.submit(class="btn btn-primary") }}
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-7">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Áreas existentes</h5>
+        <ul class="list-group">
+          {% for a in areas %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              {{ a.nombre }}
+              <div>
+                <a href="#" class="btn btn-sm btn-outline-secondary disabled">Editar</a>
+                <!-- Se puede ampliar: botones para editar/eliminar -->
+              </div>
+            </li>
+          {% else %}
+            <li class="list-group-item small text-muted">No hay áreas registradas</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Inicio - Gastos Compartidos{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card shadow-sm">
+      <div class="card-body text-center">
+        <h1 class="card-title">Gestión de gastos compartidos</h1>
+        <p class="lead">Administra presupuestos mensuales por áreas y conceptos. Registra gastos y consulta cuánto queda por pagar y cuánto le corresponde a cada persona.</p>
+        {% if current_user.is_authenticated %}
+          <a class="btn btn-primary" href="{{ url_for('dashboard') }}">Ir al dashboard</a>
+        {% else %}
+          <a class="btn btn-primary" href="{{ url_for('register') }}">Crear cuenta</a>
+          <a class="btn btn-outline-secondary ms-2" href="{{ url_for('login') }}">Ingresar</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

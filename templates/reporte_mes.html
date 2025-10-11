@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Reporte mensual{% endblock %}
+{% block content %}
+<div class="card shadow-sm">
+  <div class="card-body">
+    <h5 class="card-title">Reporte por concepto</h5>
+    <div class="table-responsive">
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th>Área</th>
+            <th>Concepto</th>
+            <th class="text-end">Presupuestado</th>
+            <th class="text-end">Gastado</th>
+            <th class="text-end">Restante</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in report %}
+            <tr>
+              <td>{{ row.concepto.area.nombre }}</td>
+              <td>{{ row.concepto.nombre }}</td>
+              <td class="text-end">{{ '{:,.0f}'.format(row.presupuestado) }}</td>
+              <td class="text-end">{{ '{:,.0f}'.format(row.gastado) }}</td>
+              <td class="text-end">{{ '{:,.0f}'.format(row.restante) }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="5" class="text-center small text-muted">No hay datos para mostrar</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
