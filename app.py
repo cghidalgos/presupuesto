@@ -133,4 +133,4 @@ def reporte_mes():
     return render_template('reporte_mes.html', report=report)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5002)
