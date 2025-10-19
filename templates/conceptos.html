@@ -46,6 +46,9 @@
                   <td class="text-end">{{ '{:,.0f}'.format(c.valor_presupuestado) }}</td>
                   <td class="text-end">{{ '{:,.0f}'.format(c.total_gastado) }}</td>
                   <td class="text-end">{{ '{:,.0f}'.format(c.restante) }}</td>
+                  <td>
+                    <a href="{{ url_for('editar_concepto', concepto_id=c.id) }}" class="btn btn-sm btn-outline-primary">Editar</a>
+                  </td>
                 </tr>
               {% else %}
                 <tr><td colspan="5" class="text-center small text-muted">No hay conceptos aún</td></tr>

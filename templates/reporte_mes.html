@@ -1,35 +1,115 @@
 {% extends 'base.html' %}
 {% block title %}Reporte mensual{% endblock %}
 {% block content %}
+<style>
+  /* Color de fondo aplicado a las celdas para asegurar visibilidad */
+  /* Colores más intensos */
+  .table-row-green  > td { background-color:#52c41a !important; color:#fff !important; } /* Pendiente = 0 */
+  .table-row-yellow > td { background-color:#ffec3d !important; color:#000 !important; } /* Pendiente = Presupuestado */
+  .table-row-orange > td { background-color:#ffd8a8 !important; }
+  .table-row-lilac  > td { background-color:#f3e5f5 !important; }
+  .table-row-red    > td { background-color:#ff4d4f !important; color:#fff !important; } /* Pendiente negativo */
+</style>
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h4 class="mb-0">Reporte mensual · {{ month_label }}</h4>
+  <form class="d-flex gap-2" method="get" action="{{ url_for('reporte_mes') }}">
+    <select name="month" class="form-select form-select-sm" style="width:auto">
+      {% for mm in range(1,13) %}
+        <option value="{{ mm }}" {% if mm == month %}selected{% endif %}>{{ ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'][mm] }}</option>
+      {% endfor %}
+    </select>
+    <input type="number" name="year" value="{{ year }}" class="form-control form-control-sm" style="width:6rem" />
+    <button class="btn btn-primary btn-sm" type="submit">Ver</button>
+  </form>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('reporte_mes', year=prev_y, month=prev_m) }}">◀ Mes anterior</a>
+    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('reporte_mes', year=next_y, month=next_m) }}">Mes siguiente ▶</a>
+    <a class="btn btn-outline-success btn-sm" href="{{ url_for('reporte_mes', year=year, month=month, format='csv') }}">Exportar CSV</a>
+  </div>
+  </div>
+
 <div class="card shadow-sm">
   <div class="card-body">
-    <h5 class="card-title">Reporte por concepto</h5>
+    <div class="d-flex gap-2 flex-wrap small mb-2 align-items-center">
+      <span class="badge" style="background-color:#52c41a;color:#fff;border:1px solid #3da314">Pendiente = 0 (verde)</span>
+      <span class="badge" style="background-color:#ffec3d;color:#000;border:1px solid #e6d200">Pendiente = Presupuestado (amarillo)</span>
+      <span class="badge" style="background-color:#ffd8a8;color:#000;border:1px solid #fec28f">Residuo ≥ 20% (naranja)</span>
+      <span class="badge" style="background-color:#f3e5f5;color:#000;border:1px solid #e3c7ea">Residuo &lt; 20% (lila)</span>
+      <span class="badge" style="background-color:#ff4d4f;color:#fff;border:1px solid #d9363e">Sobrepresupuesto (rojo)</span>
+    </div>
+    <div class="d-flex gap-2 flex-wrap mb-3 align-items-center">
+      <button type="button" class="btn btn-sm btn-outline-secondary" data-filter="all">Todos</button>
+      <button type="button" class="btn btn-sm" style="background-color:#52c41a;color:#fff" data-filter="green">Pagados ({{ counts.green }})</button>
+      <button type="button" class="btn btn-sm" style="background-color:#ffec3d;color:#000;border:1px solid #e6d200" data-filter="yellow">Pendientes ({{ counts.yellow }})</button>
+      <button type="button" class="btn btn-sm" style="background-color:#f3e5f5;color:#000;border:1px solid #e3c7ea" data-filter="lilac">Sobro ({{ counts.lilac }})</button>
+      <button type="button" class="btn btn-sm" style="background-color:#ffd8a8;color:#000;border:1px solid #fec28f" data-filter="orange">En proceso ({{ counts.orange }})</button>
+      <button type="button" class="btn btn-sm" style="background-color:#ff4d4f;color:#fff" data-filter="red">Falto ({{ counts.red }})</button>
+    </div>
     <div class="table-responsive">
-      <table class="table table-sm">
+      <table class="table table-sm align-middle">
         <thead>
           <tr>
             <th>Área</th>
             <th>Concepto</th>
             <th class="text-end">Presupuestado</th>
             <th class="text-end">Gastado</th>
-            <th class="text-end">Restante</th>
+            <th class="text-end">Pendiente</th>
           </tr>
         </thead>
         <tbody>
           {% for row in report %}
-            <tr>
+            {% set ratio = (0 if row.presupuestado == 0 else (row.pendiente / row.presupuestado)) %}
+            {% if row.pendiente < 0 %}
+              {% set row_class = 'table-row-red' %}
+            {% elif row.pendiente == 0 %}
+              {% set row_class = 'table-row-green' %}
+            {% elif row.presupuestado > 0 and row.pendiente == row.presupuestado %}
+              {% set row_class = 'table-row-yellow' %}
+            {% elif ratio < 0.2 %}
+              {% set row_class = 'table-row-lilac' %}
+            {% else %}
+              {% set row_class = 'table-row-orange' %}
+            {% endif %}
+            <tr class="{{ row_class }}" data-state="{{ row.state }}">
               <td>{{ row.concepto.area.nombre }}</td>
               <td>{{ row.concepto.nombre }}</td>
               <td class="text-end">{{ '{:,.0f}'.format(row.presupuestado) }}</td>
               <td class="text-end">{{ '{:,.0f}'.format(row.gastado) }}</td>
-              <td class="text-end">{{ '{:,.0f}'.format(row.restante) }}</td>
+              <td class="text-end">{{ '{:,.0f}'.format(row.pendiente) }}</td>
             </tr>
           {% else %}
             <tr><td colspan="5" class="text-center small text-muted">No hay datos para mostrar</td></tr>
           {% endfor %}
         </tbody>
+        <tfoot>
+          <tr class="fw-semibold">
+            <td colspan="2" class="text-end">Totales</td>
+            <td class="text-end">{{ '{:,.0f}'.format(total_pres) }}</td>
+            <td class="text-end">{{ '{:,.0f}'.format(total_gasto) }}</td>
+            <td class="text-end">{{ '{:,.0f}'.format(total_pend) }}</td>
+          </tr>
+        </tfoot>
       </table>
     </div>
   </div>
 </div>
+<script>
+  (function(){
+    const table = document.querySelector('table');
+    const buttons = document.querySelectorAll('[data-filter]');
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const filter = btn.getAttribute('data-filter');
+        document.querySelectorAll('tbody tr').forEach(tr => {
+          const state = tr.getAttribute('data-state');
+          if (filter === 'all' || state === filter) {
+            tr.style.display = '';
+          } else {
+            tr.style.display = 'none';
+          }
+        });
+      });
+    });
+  })();
+  </script>
 {% endblock %}

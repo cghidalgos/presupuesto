@@ -30,8 +30,8 @@
             <li class="list-group-item d-flex justify-content-between align-items-center">
               {{ a.nombre }}
               <div>
-                <a href="#" class="btn btn-sm btn-outline-secondary disabled">Editar</a>
-                <!-- Se puede ampliar: botones para editar/eliminar -->
+                <a href="{{ url_for('editar_area', area_id=a.id) }}" class="btn btn-sm btn-outline-primary">Editar</a>
+                <!-- Se puede ampliar: botones para eliminar -->
               </div>
             </li>
           {% else %}

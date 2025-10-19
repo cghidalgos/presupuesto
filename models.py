@@ -43,3 +43,17 @@ class Gasto(db.Model):
     usuario_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     monto = db.Column(db.Float, nullable=False)
     fecha = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class PresupuestoMensual(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    concepto_id = db.Column(db.Integer, db.ForeignKey('concepto.id'), nullable=False)
+    year = db.Column(db.Integer, nullable=False)
+    month = db.Column(db.Integer, nullable=False)  # 1-12
+    valor_presupuestado = db.Column(db.Float, nullable=False)
+
+    concepto = db.relationship('Concepto', backref=db.backref('presupuestos_mensuales', lazy=True))
+
+    __table_args__ = (
+        db.UniqueConstraint('concepto_id', 'year', 'month', name='uq_concepto_mes'),
+    )

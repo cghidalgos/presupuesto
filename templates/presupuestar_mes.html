@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Presupuestar {{ next_month }}{% endblock %}
+{% block content %}
+<h3>Presupuestar {{ next_month }}</h3>
+<p class="text-muted">Basado en lo ocurrido en {{ prev_month }}: si gastaste más de lo presupuestado sugerimos subirlo; si gastaste menos, sugerimos bajarlo. Puedes editar antes de confirmar.</p>
+<form method="post">
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Concepto</th>
+        <th>Presupuestado ({{ prev_month }})</th>
+        <th>Gastado ({{ prev_month }})</th>
+        <th>Sugerido ({{ next_month }})</th>
+        <th>Editar presupuesto</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in sugerencias %}
+      <tr>
+        <td>{{ s.nombre }}</td>
+        <td class="text-end">{{ '{:,.0f}'.format(s.presupuestado_anterior) }}</td>
+        <td class="text-end">{{ '{:,.0f}'.format(s.gastado_anterior) }}</td>
+        <td class="text-end">{{ '{:,.0f}'.format(s.sugerido) }}</td>
+        <td>
+          <input type="number" step="0.01" name="presupuesto_{{ s.id }}" value="{{ s.sugerido }}" class="form-control" />
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="d-flex justify-content-end">
+    <button type="submit" class="btn btn-success">Aceptar y guardar</button>
+  </div>
+</form>
+{% endblock %}
