@@ -28,15 +28,13 @@ class Concepto(db.Model):
     area_id = db.Column(db.Integer, db.ForeignKey('area.id'), nullable=False)
     gastos = db.relationship('Gasto', backref='concepto', lazy=True)
 
+    @property
+    def total_gastado(self):
+        return sum(g.monto for g in self.gastos)
 
-@property
-def total_gastado(self):
-    return sum(g.monto for g in self.gastos)
-
-
-@property
-def restante(self):
-    return max(self.valor_presupuestado - self.total_gastado, 0)
+    @property
+    def restante(self):
+        return max(self.valor_presupuestado - self.total_gastado, 0)
 
 
 class Gasto(db.Model):
