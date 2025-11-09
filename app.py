@@ -5,6 +5,8 @@ from models import db, User, Area, Concepto, Gasto, PresupuestoMensual
 from forms import LoginForm, RegisterForm, AreaForm, ConceptoForm, GastoForm
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 import os
+import unicodedata
+import re
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -201,13 +203,101 @@ def editar_concepto(concepto_id):
         return redirect(url_for('conceptos_view'))
     return render_template('conceptos.html', form=form, conceptos=Concepto.query.all(), editar_concepto=concepto)
 
+# Eliminar Concepto
+@app.route('/conceptos/eliminar/<int:concepto_id>', methods=['POST'])
+@login_required
+def eliminar_concepto(concepto_id):
+    concepto = Concepto.query.get_or_404(concepto_id)
+    gastos_asociados = len(concepto.gastos)
+    presupuestos_asociados = len(getattr(concepto, 'presupuestos_mensuales', []))
+
+    if gastos_asociados > 0 or presupuestos_asociados > 0:
+        flash(
+            f'No se puede eliminar el concepto "{concepto.nombre}" porque tiene '
+            f'{gastos_asociados} gasto(s) y {presupuestos_asociados} presupuesto(s) mensual(es) asociados.',
+            'danger'
+        )
+        return redirect(url_for('conceptos_view'))
+
+    db.session.delete(concepto)
+    db.session.commit()
+    flash('Concepto eliminado', 'success')
+    return redirect(url_for('conceptos_view'))
+
+@app.route('/usuarios', methods=['GET', 'POST'])
+@login_required
+def usuarios_view():
+    usuarios = User.query.all()
+    
+    if request.method == 'POST':
+        # Recoger los nuevos aportes desde el formulario
+        nuevos_aportes = {}
+        total_aporte = 0.0
+        
+        for u in usuarios:
+            try:
+                nuevo_aporte = float(request.form.get(f'aporte_{u.id}', 0))
+                if nuevo_aporte < 0 or nuevo_aporte > 100:
+                    flash(f'El aporte de {u.name} debe estar entre 0 y 100%', 'danger')
+                    return redirect(url_for('usuarios_view'))
+                nuevos_aportes[u.id] = nuevo_aporte / 100.0
+                total_aporte += nuevo_aporte
+            except ValueError:
+                flash(f'Valor inválido para el aporte de {u.name}', 'danger')
+                return redirect(url_for('usuarios_view'))
+        
+        # Validar que la suma sea 100%
+        if abs(total_aporte - 100.0) > 0.01:  # tolerancia de 0.01% para errores de redondeo
+            flash(f'La suma de los aportes debe ser 100%. Actualmente es {total_aporte:.2f}%', 'danger')
+            return redirect(url_for('usuarios_view'))
+        
+        # Actualizar los aportes
+        for u in usuarios:
+            u.aporte = nuevos_aportes[u.id]
+        
+        db.session.commit()
+        flash('Aportes actualizados correctamente', 'success')
+        return redirect(url_for('usuarios_view'))
+    
+    # Calcular suma actual de aportes
+    total_actual = sum(u.aporte for u in usuarios) * 100
+    
+    return render_template('usuarios.html', usuarios=usuarios, total_actual=total_actual)
+
 @app.route('/gastos', methods=['GET', 'POST'])
 @login_required
 def gastos_view():
     form = GastoForm()
     form.concepto_id.choices = [(c.id, f"{c.nombre} ({c.area.nombre})") for c in Concepto.query.all()]
+    # Establecer fecha actual como valor por defecto
+    if request.method == 'GET':
+        form.fecha.data = datetime.today().date()
     if form.validate_on_submit():
-        gasto = Gasto(concepto_id=form.concepto_id.data, usuario_id=current_user.id, monto=form.monto.data)
+        # Validar presupuesto mensual y advertir si se excede (pero permitir el registro)
+        concepto = Concepto.query.get(form.concepto_id.data)
+        fecha_gasto = datetime.combine(form.fecha.data, datetime.min.time())
+        year = fecha_gasto.year
+        month = fecha_gasto.month
+
+        # Obtener presupuesto mensual o usar valor base
+        pm = PresupuestoMensual.query.filter_by(concepto_id=concepto.id, year=year, month=month).first()
+        presupuesto_mes = pm.valor_presupuestado if pm else concepto.valor_presupuestado
+
+        # Calcular total gastado en ese mes (sin incluir el gasto actual)
+        gastado_mes = sum(g.monto for g in concepto.gastos if g.fecha.year == year and g.fecha.month == month)
+
+        # Calcular lo que quedaría disponible antes de este gasto
+        disponible = presupuesto_mes - gastado_mes
+
+        if form.monto.data > max(disponible, 0):
+            exceso = form.monto.data - max(disponible, 0)
+            flash(
+                f'Advertencia: el gasto excede el presupuesto disponible para {concepto.nombre} en {month}/{year} '
+                f'por ${exceso:,.0f}. Se registrará de todas formas.',
+                'warning'
+            )
+
+        gasto = Gasto(concepto_id=form.concepto_id.data, usuario_id=current_user.id, monto=form.monto.data, fecha=fecha_gasto)
         db.session.add(gasto)
         db.session.commit()
         flash('Gasto registrado', 'success')
@@ -232,24 +322,52 @@ def reporte_mes():
     next_y, next_m = (y + 1, 1) if m == 12 else (y, m + 1)
 
     conceptos = Concepto.query.all()
+    # Agrupar por nombre de concepto (normalizado: trim, colapsar espacios, sin acentos, lower)
+    group_map = {}
+    for c in conceptos:
+        raw_name = (c.nombre or '')
+        name_strip = raw_name.strip()
+        name_collapsed = re.sub(r"\s+", " ", name_strip)
+        name_nfd = unicodedata.normalize('NFD', name_collapsed)
+        name_no_accents = ''.join(ch for ch in name_nfd if unicodedata.category(ch) != 'Mn')
+        key = name_no_accents.lower()
+
+        # Presupuesto mensual si existe, si no usar el valor base del concepto
+        pm = PresupuestoMensual.query.filter_by(concepto_id=c.id, year=y, month=m).first()
+        presup_c = pm.valor_presupuestado if pm else c.valor_presupuestado
+
+        # Gastos del mes/año seleccionados para este concepto
+        gastos_mes_c = [g for g in c.gastos if g.fecha.year == y and g.fecha.month == m]
+        gastado_c = sum(g.monto for g in gastos_mes_c)
+
+        if key not in group_map:
+            group_map[key] = {
+                'concepto_name': name_collapsed if name_collapsed else c.nombre,
+                'area_name': c.area.nombre if c.area else '',
+                'presupuestado': 0.0,
+                'gastado': 0.0,
+                'gastos': [],
+                'group_key': key.replace(' ', '-'),
+                'source_count': 0,
+            }
+        group_map[key]['presupuestado'] += float(presup_c or 0)
+        group_map[key]['gastado'] += float(gastado_c or 0)
+        group_map[key]['gastos'].extend(gastos_mes_c)
+        group_map[key]['source_count'] += 1
+
+    # Construir reporte final desde los grupos
     report = []
     total_pres = 0.0
     total_gasto = 0.0
     total_pend = 0.0
+    total_exceso = 0.0
     counts = { 'green': 0, 'yellow': 0, 'lilac': 0, 'orange': 0, 'red': 0 }
 
-    for c in conceptos:
-        # Presupuesto mensual si existe, si no usar el valor base del concepto
-        pm = PresupuestoMensual.query.filter_by(concepto_id=c.id, year=y, month=m).first()
-        presupuestado = pm.valor_presupuestado if pm else c.valor_presupuestado
-
-        # Gastado en el mes/año seleccionados
-        gastado = sum(g.monto for g in c.gastos if g.fecha.year == y and g.fecha.month == m)
-        pendiente = presupuestado - gastado  # permitir negativos para sobrepresupuesto
-
-        total_pres += presupuestado
-        total_gasto += gastado
-        total_pend += pendiente
+    for g in group_map.values():
+        presupuestado = g['presupuestado']
+        gastado = g['gastado']
+        pendiente = presupuestado - gastado
+        exceso = max(gastado - presupuestado, 0)
 
         # Clasificar estado para contador
         if pendiente < 0:
@@ -270,34 +388,56 @@ def reporte_mes():
                 counts['orange'] += 1
                 state = 'orange'
 
+        total_pres += presupuestado
+        total_gasto += gastado
+        total_pend += pendiente
+        total_exceso += exceso
+
         report.append({
-            'concepto': c,
+            'area_name': g['area_name'],
+            'concepto_name': g['concepto_name'],
             'presupuestado': presupuestado,
             'gastado': gastado,
             'pendiente': pendiente,
+            'exceso': exceso,
             'state': state,
+            'gastos': g['gastos'],
+            'group_key': g['group_key'],
+            'source_count': g['source_count'],
         })
 
     month_label = f"{month_name[m]} {y}"
+
+    # Calcular aporte esperado por usuario
+    usuarios = User.query.all()
+    aportes_usuarios = []
+    for u in usuarios:
+        aporte_esperado = total_pres * u.aporte
+        aportes_usuarios.append({
+            'nombre': u.name,
+            'porcentaje': u.aporte * 100,
+            'aporte_esperado': aporte_esperado
+        })
 
     # Exportar CSV si se solicita
     if request.args.get('format') == 'csv':
         import io, csv
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow(['Año', 'Mes', 'Área', 'Concepto', 'Presupuestado', 'Gastado', 'Pendiente'])
+        writer.writerow(['Año', 'Mes', 'Área', 'Concepto', 'Presupuestado', 'Gastado', 'Pendiente', 'Exceso'])
         for row in report:
             writer.writerow([
                 y,
                 m,
-                row['concepto'].area.nombre,
-                row['concepto'].nombre,
+                row['area_name'],
+                row['concepto_name'],
                 int(round(row['presupuestado'])),
                 int(round(row['gastado'])),
                 int(round(row['pendiente'])),
+                int(round(row['exceso'])),
             ])
         writer.writerow([])
-        writer.writerow(['Totales', '', '', '', int(round(total_pres)), int(round(total_gasto)), int(round(total_pend))])
+        writer.writerow(['Totales', '', '', '', int(round(total_pres)), int(round(total_gasto)), int(round(total_pend)), int(round(total_exceso))])
         csv_data = output.getvalue()
         output.close()
         return Response(
@@ -315,11 +455,13 @@ def reporte_mes():
         total_pres=total_pres,
         total_gasto=total_gasto,
         total_pend=total_pend,
+        total_exceso=total_exceso,
         prev_y=prev_y,
         prev_m=prev_m,
         next_y=next_y,
         next_m=next_m,
         counts=counts,
+        aportes_usuarios=aportes_usuarios,
     )
 
 if __name__ == '__main__':

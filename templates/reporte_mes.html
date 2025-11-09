@@ -1,15 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}Reporte mensual{% endblock %}
 {% block content %}
-<style>
-  /* Color de fondo aplicado a las celdas para asegurar visibilidad */
-  /* Colores más intensos */
-  .table-row-green  > td { background-color:#52c41a !important; color:#fff !important; } /* Pendiente = 0 */
-  .table-row-yellow > td { background-color:#ffec3d !important; color:#000 !important; } /* Pendiente = Presupuestado */
-  .table-row-orange > td { background-color:#ffd8a8 !important; }
-  .table-row-lilac  > td { background-color:#f3e5f5 !important; }
-  .table-row-red    > td { background-color:#ff4d4f !important; color:#fff !important; } /* Pendiente negativo */
-</style>
 <div class="d-flex align-items-center justify-content-between mb-3">
   <h4 class="mb-0">Reporte mensual · {{ month_label }}</h4>
   <form class="d-flex gap-2" method="get" action="{{ url_for('reporte_mes') }}">
@@ -28,22 +19,48 @@
   </div>
   </div>
 
+<div class="card shadow-sm mb-3">
+  <div class="card-body">
+    <h5 class="card-title mb-3">Distribución del presupuesto por usuario</h5>
+    <div class="table-responsive">
+      <table class="table table-sm table-bordered">
+        <thead class="table-light">
+          <tr>
+            <th>Usuario</th>
+            <th class="text-end">Porcentaje</th>
+            <th class="text-end">Aporte esperado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for aporte in aportes_usuarios %}
+          <tr>
+            <td>{{ aporte.nombre }}</td>
+            <td class="text-end">{{ '{:.1f}'.format(aporte.porcentaje) }}%</td>
+            <td class="text-end">${{ '{:,.0f}'.format(aporte.aporte_esperado) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <div class="card shadow-sm">
   <div class="card-body">
     <div class="d-flex gap-2 flex-wrap small mb-2 align-items-center">
-      <span class="badge" style="background-color:#52c41a;color:#fff;border:1px solid #3da314">Pendiente = 0 (verde)</span>
-      <span class="badge" style="background-color:#ffec3d;color:#000;border:1px solid #e6d200">Pendiente = Presupuestado (amarillo)</span>
-      <span class="badge" style="background-color:#ffd8a8;color:#000;border:1px solid #fec28f">Residuo ≥ 20% (naranja)</span>
-      <span class="badge" style="background-color:#f3e5f5;color:#000;border:1px solid #e3c7ea">Residuo &lt; 20% (lila)</span>
-      <span class="badge" style="background-color:#ff4d4f;color:#fff;border:1px solid #d9363e">Sobrepresupuesto (rojo)</span>
+      <span class="badge" style="background-color:#8B9A7E;color:#fff">✓ Pagado completo</span>
+      <span class="badge" style="background-color:#D5A379;color:#fff">○ Sin movimiento</span>
+      <span class="badge" style="background-color:#C17A5F;color:#fff">↗ En progreso (≥20%)</span>
+      <span class="badge" style="background-color:#A8725C;color:#fff">⚡ Por finalizar (&lt;20%)</span>
+      <span class="badge" style="background-color:#B85C4F;color:#fff">⚠ Sobrepresupuesto</span>
     </div>
     <div class="d-flex gap-2 flex-wrap mb-3 align-items-center">
       <button type="button" class="btn btn-sm btn-outline-secondary" data-filter="all">Todos</button>
-      <button type="button" class="btn btn-sm" style="background-color:#52c41a;color:#fff" data-filter="green">Pagados ({{ counts.green }})</button>
-      <button type="button" class="btn btn-sm" style="background-color:#ffec3d;color:#000;border:1px solid #e6d200" data-filter="yellow">Pendientes ({{ counts.yellow }})</button>
-      <button type="button" class="btn btn-sm" style="background-color:#f3e5f5;color:#000;border:1px solid #e3c7ea" data-filter="lilac">Sobro ({{ counts.lilac }})</button>
-      <button type="button" class="btn btn-sm" style="background-color:#ffd8a8;color:#000;border:1px solid #fec28f" data-filter="orange">En proceso ({{ counts.orange }})</button>
-      <button type="button" class="btn btn-sm" style="background-color:#ff4d4f;color:#fff" data-filter="red">Falto ({{ counts.red }})</button>
+      <button type="button" class="btn btn-sm" style="background-color:#8B9A7E;color:#fff" data-filter="green">Pagados ({{ counts.green }})</button>
+      <button type="button" class="btn btn-sm" style="background-color:#D5A379;color:#fff" data-filter="yellow">Pendientes ({{ counts.yellow }})</button>
+      <button type="button" class="btn btn-sm" style="background-color:#A8725C;color:#fff" data-filter="lilac">Por finalizar ({{ counts.lilac }})</button>
+      <button type="button" class="btn btn-sm" style="background-color:#C17A5F;color:#fff" data-filter="orange">En proceso ({{ counts.orange }})</button>
+      <button type="button" class="btn btn-sm" style="background-color:#B85C4F;color:#fff" data-filter="red">Excedidos ({{ counts.red }})</button>
     </div>
     <div class="table-responsive">
       <table class="table table-sm align-middle">
@@ -54,6 +71,7 @@
             <th class="text-end">Presupuestado</th>
             <th class="text-end">Gastado</th>
             <th class="text-end">Pendiente</th>
+            <th class="text-end">Exceso</th>
           </tr>
         </thead>
         <tbody>
@@ -71,14 +89,46 @@
               {% set row_class = 'table-row-orange' %}
             {% endif %}
             <tr class="{{ row_class }}" data-state="{{ row.state }}">
-              <td>{{ row.concepto.area.nombre }}</td>
-              <td>{{ row.concepto.nombre }}</td>
+              <td>{{ row.area_name }}</td>
+              <td>
+                {{ row.concepto_name }}
+                {% if row.source_count and row.source_count > 1 %}
+                  <small class="text-muted ms-1">· {{ row.source_count }} conceptos agrupados</small>
+                {% endif %}
+                {% if row.gastos|length > 0 %}
+                  <button class="btn btn-sm btn-link p-0 ms-2" type="button" data-bs-toggle="collapse" data-bs-target="#gastos-{{ row.group_key }}" aria-expanded="false">
+                    <small>({{ row.gastos|length }} gastos)</small>
+                  </button>
+                {% endif %}
+              </td>
               <td class="text-end">{{ '{:,.0f}'.format(row.presupuestado) }}</td>
               <td class="text-end">{{ '{:,.0f}'.format(row.gastado) }}</td>
               <td class="text-end">{{ '{:,.0f}'.format(row.pendiente) }}</td>
+              <td class="text-end">{{ '{:,.0f}'.format(row.exceso) }}</td>
             </tr>
+            {% if row.gastos|length > 0 %}
+            <tr class="collapse" id="gastos-{{ row.group_key }}">
+              <td colspan="6" class="p-0">
+                <div class="px-4 py-2 bg-light">
+                  <small class="fw-semibold">Detalle de gastos:</small>
+                  <table class="table table-sm table-borderless mb-0 mt-1">
+                    <thead><tr><th>Fecha</th><th>Usuario</th><th class="text-end">Monto</th></tr></thead>
+                    <tbody>
+                      {% for gasto in row.gastos %}
+                      <tr>
+                        <td><small>{{ gasto.fecha.strftime('%d/%m/%Y') }}</small></td>
+                        <td><small>{{ gasto.user.name }}</small></td>
+                        <td class="text-end"><small>{{ '{:,.0f}'.format(gasto.monto) }}</small></td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </td>
+            </tr>
+            {% endif %}
           {% else %}
-            <tr><td colspan="5" class="text-center small text-muted">No hay datos para mostrar</td></tr>
+            <tr><td colspan="6" class="text-center small text-muted">No hay datos para mostrar</td></tr>
           {% endfor %}
         </tbody>
         <tfoot>
@@ -87,6 +137,7 @@
             <td class="text-end">{{ '{:,.0f}'.format(total_pres) }}</td>
             <td class="text-end">{{ '{:,.0f}'.format(total_gasto) }}</td>
             <td class="text-end">{{ '{:,.0f}'.format(total_pend) }}</td>
+            <td class="text-end">{{ '{:,.0f}'.format(total_exceso) }}</td>
           </tr>
         </tfoot>
       </table>

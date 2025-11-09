@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, FloatField, SelectField, IntegerField
+from wtforms import StringField, PasswordField, SubmitField, FloatField, SelectField, IntegerField, DateField
 from wtforms.validators import DataRequired, Email, NumberRange
 
 
@@ -32,4 +32,5 @@ class ConceptoForm(FlaskForm):
 class GastoForm(FlaskForm):
     concepto_id = SelectField('Concepto', coerce=int)
     monto = FloatField('Monto', validators=[DataRequired()])
+    fecha = DateField('Fecha', validators=[DataRequired()], format='%Y-%m-%d')
     submit = SubmitField('Registrar gasto')

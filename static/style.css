@@ -1,51 +1,352 @@
-/* ===============================
-   Estilo general para la app
-   =============================== */
+/* ============================================
+   PALETA DE COLORES OTOÑO SUAVE
+   ============================================ */
+:root {
+  /* Colores principales - tonos tierra cálidos */
+  --autumn-cream: #F5EBE0;
+  --autumn-sand: #E3D5CA;
+  --autumn-terracotta: #D5A379;
+  --autumn-rust: #C17A5F;
+  --autumn-clay: #A8725C;
+  
+  /* Acentos - tonos naturales */
+  --autumn-sage: #8B9A7E;
+  --autumn-olive: #707C5C;
+  --autumn-forest: #556B4A;
+  
+  /* Neutrales */
+  --autumn-cream-light: #FAF7F4;
+  --autumn-beige: #DED4C8;
+  --autumn-brown: #8B7355;
+  --autumn-dark: #4A4238;
+  
+  /* Estados con tonos otoñales */
+  --autumn-success: #8B9A7E;
+  --autumn-warning: #D5A379;
+  --autumn-danger: #B85C4F;
+  --autumn-info: #7D94A3;
+}
+
+/* ============================================
+   ESTILOS GLOBALES
+   ============================================ */
 body {
-  background-color: #f8f9fa;
-  font-family: 'Inter', sans-serif;
+  background: linear-gradient(135deg, var(--autumn-cream-light) 0%, var(--autumn-sand) 100%);
+  color: var(--autumn-dark);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  min-height: 100vh;
   padding-bottom: 80px;
 }
 
+/* ============================================
+   NAVEGACIÓN
+   ============================================ */
 .navbar {
-  border-bottom: 1px solid #eaeaea;
+  background: linear-gradient(90deg, var(--autumn-cream) 0%, var(--autumn-sand) 100%) !important;
+  border-bottom: 2px solid var(--autumn-terracotta);
+  box-shadow: 0 2px 8px rgba(139, 115, 85, 0.1);
 }
 
 .navbar-brand {
-  font-weight: 600;
-  color: #0d6efd !important;
+  color: var(--autumn-clay) !important;
+  font-weight: 700;
+  letter-spacing: 0.5px;
 }
 
+.nav-link {
+  color: var(--autumn-brown) !important;
+  transition: all 0.3s ease;
+  padding: 0.5rem 1rem !important;
+  border-radius: 8px;
+}
+
+.nav-link:hover {
+  color: var(--autumn-rust) !important;
+  background-color: rgba(213, 163, 121, 0.15);
+}
+
+/* ============================================
+   CARDS Y CONTENEDORES
+   ============================================ */
 .card {
-  border: none;
-  border-radius: 1rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  background: rgba(250, 247, 244, 0.95);
+  border: 1px solid var(--autumn-beige);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(139, 115, 85, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(139, 115, 85, 0.12);
 }
 
 .card-title {
+  color: var(--autumn-clay);
+  border-bottom: 2px solid var(--autumn-terracotta);
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
   font-weight: 600;
 }
 
+.card-body {
+  padding: 1.5rem;
+}
+
+/* ============================================
+   BOTONES
+   ============================================ */
 .btn {
   border-radius: 0.75rem;
+  transition: all 0.3s ease;
 }
 
-footer {
-  background-color: #fff;
-  border-top: 1px solid #e9ecef;
-  padding: 10px 0;
-  font-size: 0.9rem;
-  color: #777;
+.btn-primary {
+  background: linear-gradient(135deg, var(--autumn-rust) 0%, var(--autumn-clay) 100%);
+  border: none;
+  color: white;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(193, 122, 95, 0.3);
 }
 
-/* tablas */
-.table th {
-  background-color: #f1f3f5;
-  font-weight: 600;
+.btn-primary:hover {
+  background: linear-gradient(135deg, var(--autumn-clay) 0%, var(--autumn-rust) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(193, 122, 95, 0.4);
+}
+
+.btn-secondary {
+  background-color: var(--autumn-sage);
+  border: none;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: var(--autumn-forest);
+  transform: translateY(-2px);
+}
+
+.btn-success {
+  background-color: var(--autumn-success);
+  border: none;
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: var(--autumn-forest);
+}
+
+.btn-outline-primary {
+  border-color: var(--autumn-rust);
+  color: var(--autumn-rust);
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--autumn-rust);
+  color: white;
+}
+
+.btn-outline-secondary {
+  border-color: var(--autumn-sage);
+  color: var(--autumn-sage);
+}
+
+.btn-outline-secondary:hover {
+  background-color: var(--autumn-sage);
+  color: white;
+}
+
+.btn-outline-danger {
+  border-color: var(--autumn-danger);
+  color: var(--autumn-danger);
+}
+
+.btn-outline-danger:hover {
+  background-color: var(--autumn-danger);
+  color: white;
+}
+
+.btn-outline-success {
+  border-color: var(--autumn-success);
+  color: var(--autumn-success);
+}
+
+.btn-outline-success:hover {
+  background-color: var(--autumn-success);
+  color: white;
+}
+
+/* ============================================
+   FORMULARIOS
+   ============================================ */
+.form-control, .form-select {
+  border: 1px solid var(--autumn-beige);
+  border-radius: 8px;
+  background-color: white;
+  color: var(--autumn-dark);
+  transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--autumn-terracotta);
+  box-shadow: 0 0 0 0.2rem rgba(213, 163, 121, 0.25);
+  background-color: var(--autumn-cream-light);
+}
+
+.form-label {
+  color: var(--autumn-brown);
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+/* ============================================
+   TABLAS
+   ============================================ */
+.table {
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table thead {
+  background: linear-gradient(90deg, var(--autumn-terracotta) 0%, var(--autumn-rust) 100%);
+  color: white;
+}
+
+.table thead th {
+  border: none;
+  font-weight: 500;
+  padding: 1rem;
+}
+
+.table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.table tbody tr:hover {
+  background-color: rgba(213, 163, 121, 0.1);
 }
 
 .table td, .table th {
   vertical-align: middle;
+}
+
+.table-light {
+  background-color: var(--autumn-cream) !important;
+}
+
+.table-bordered {
+  border: 1px solid var(--autumn-beige);
+}
+
+/* ============================================
+   ALERTAS
+   ============================================ */
+.alert {
+  border-radius: 10px;
+  border: none;
+  box-shadow: 0 2px 8px rgba(139, 115, 85, 0.1);
+}
+
+.alert-success {
+  background-color: rgba(139, 154, 126, 0.15);
+  color: var(--autumn-forest);
+  border-left: 4px solid var(--autumn-success);
+}
+
+.alert-warning {
+  background-color: rgba(213, 163, 121, 0.15);
+  color: var(--autumn-clay);
+  border-left: 4px solid var(--autumn-warning);
+}
+
+.alert-danger {
+  background-color: rgba(184, 92, 79, 0.15);
+  color: var(--autumn-danger);
+  border-left: 4px solid var(--autumn-danger);
+}
+
+.alert-info {
+  background-color: rgba(125, 148, 163, 0.15);
+  color: var(--autumn-info);
+  border-left: 4px solid var(--autumn-info);
+}
+
+/* ============================================
+   BADGES
+   ============================================ */
+.badge {
+  border-radius: 6px;
+  padding: 0.4rem 0.8rem;
+  font-weight: 500;
+}
+
+/* ============================================
+   FOOTER
+   ============================================ */
+footer {
+  background: linear-gradient(90deg, var(--autumn-cream) 0%, var(--autumn-sand) 100%);
+  border-top: 2px solid var(--autumn-terracotta);
+  color: var(--autumn-brown);
+  box-shadow: 0 -2px 8px rgba(139, 115, 85, 0.1);
+  padding: 10px 0;
+  font-size: 0.9rem;
+}
+
+/* ============================================
+   ESTADOS DEL REPORTE (Colores otoñales)
+   ============================================ */
+.table-row-green > td {
+  background-color: rgba(139, 154, 126, 0.3) !important;
+  color: var(--autumn-forest) !important;
+  font-weight: 500;
+}
+
+.table-row-yellow > td {
+  background-color: rgba(213, 163, 121, 0.25) !important;
+  color: var(--autumn-clay) !important;
+}
+
+.table-row-orange > td {
+  background-color: rgba(193, 122, 95, 0.2) !important;
+  color: var(--autumn-rust) !important;
+}
+
+.table-row-lilac > td {
+  background-color: rgba(168, 114, 92, 0.15) !important;
+  color: var(--autumn-brown) !important;
+}
+
+.table-row-red > td {
+  background-color: rgba(184, 92, 79, 0.3) !important;
+  color: var(--autumn-danger) !important;
+  font-weight: 500;
+}
+
+/* Estados de tabla para usuarios */
+.table-success {
+  background-color: rgba(139, 154, 126, 0.2) !important;
+}
+
+.table-warning {
+  background-color: rgba(213, 163, 121, 0.2) !important;
+}
+
+/* ============================================
+   UTILIDADES
+   ============================================ */
+.text-muted {
+  color: var(--autumn-brown) !important;
+  opacity: 0.7;
+}
+
+.shadow-sm {
+  box-shadow: 0 2px 8px rgba(139, 115, 85, 0.08) !important;
+}
+
+hr {
+  border-color: var(--autumn-beige);
+  opacity: 0.5;
 }
 
 /* gráficos */
@@ -58,4 +359,27 @@ footer {
   .plot-container {
     height: 250px;
   }
+}
+
+/* ============================================
+   ANIMACIONES SUAVES
+   ============================================ */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Efecto de entrada suave */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+main {
+  animation: fadeIn 0.5s ease-out;
 }
